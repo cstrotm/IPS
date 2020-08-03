@@ -1,0 +1,56 @@
+(IPS-M Rotation Operators, Karl Meinzer 16.4.83 )
+: *F VERT DUP <0 JA?   CHS P* CHS
+                 NEIN: P*
+                 DANN  VERT WEG ;
+39797 KON KORR   10430 KON 1RAD     #4000 KON C/4
+: R>P  C/4 ZWO <0 JA?   CHS RDU CHS VERT
+                  NEIN: RDU VERT CHS
+                  DANN 0 RP-LOOP WEG KORR *F VERT ;
+: T-R  C/4 ZWO <0 JA?   + RDU VERT CHS
+                  NEIN: - RDU CHS VERT
+                  DANN 0 TR-LOOP KORR *F RDU KORR *F RDU WEG ;
+: /A/  DUP <0 JA? CHS DANN ;
+: /N S>R DUP <0 JA?   CHS 1RAD P* R>S P/ CHS
+                NEIN: 1RAD P* R>S P/
+                DANN ;
+( End of plane trigonometry )
+( Spherical Trigonometry, Karl Meinzer 15.8.79 )
+: 3P>R ( R,L,B -> X,Y,Z )
+  VERT RDU 0 VERT T-R RDU 0 RDO T-R RDO ;
+: 3R>P ( X,Y,Z -> R,L,B )
+  RDU R>P RDU VERT R>P RDO VERT ;
+: PROJECTION ( LP,BP,LN,BN -> C/4*COS{ PR }, L,B )
+  C/4 - S>R C/4 + RDO ZWO - RDO C/4 RDU 3P>R I T-R WEG 0
+  R>S CHS T-R 3R>P S>R RDO + R>S ;
+: A.B ( LA,BA, LB,BB -> C/4.COS )
+  S>R S>R VERT R>S - VERT C/4 RDU 3P>R RDO VERT C/4 R>S -
+  T-R RDU PWEG ;
+: AXB ( LA,BA,LB,BB -> C/4.SIN,LC,BC )
+ C/4 - ZWO S>R S>R RDO VERT - VERT C/4 RDU 3P>R RDO VERT I CHS
+ T-R WEG CHS VERT 0 R>S T-R RDU VERT RDO 3R>P VERT R>S + VERT ;
+: SK2 ( HYP, KATH.1 -> KATH.2 )
+  1RAD 0 RDO T-R WEG VERT 1RAD 0 RDO T-R WEG ( COS.K COS.H )
+  DUP <0 DUP JA? VERT CHS VERT DANN S>R VERT
+  DUP <0 DUP JA? VERT CHS VERT DANN R>S + S>R
+  /N /A/ DUP 1RAD > JA? WEG 1RAD DANN #2000
+   ANFANG 1RAD ZWO 0 VERT T-R S>R S>R ZWO R>S - R>S VERT S>R
+          DUP <0 JA?   CHS 8 + I VERT /N CHS
+                 NEIN:     8 + I VERT /N
+                 DANN - R>S /A/ 9 <
+   ENDE? VERT WEG R>S JA? #8000 VERT - DANN ;
+: -R3 0 2 JE S>R RDO R>S - RDU NUN ;
+: +R3 0 2 JE S>R RDO R>S + RDU NUN ;
+: -P3 3P>R 3V3 3P>R 3V3 -R3 3R>P ;
+: +P3 3P>R 3V3 3P>R 3V3 +R3 3R>P ;
+: @3 DUP @ VERT 2 + DUP @ VERT 2 + @ ;
+: !3 S>R I 4 + ! I 2 + ! R>S ! ;
+: @L3     2 + @ ;
+: @B3     4 + @ ;
+: @LB3    DUP @L3 VERT @B3 ;
+( End spherical trigonometry )
+
+" Trigonometry Library Loaded OK " #01D0 !T
+
+
+
+

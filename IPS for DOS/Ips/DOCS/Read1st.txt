@@ -1,0 +1,74 @@
+About IPSDOC.ZIP
+----------------
+This archive, IPSDOC.ZIP, contains most of the documents that I have generated
+with respect to IPS-M and IPS-X for the Acorn Risc Computer, plus some of
+general interest.
+
+Though apparently slanted towards a specific machine, IPS-M is designed as a
+virtual machine that will run on /any/ platform.
+
+All the information contained herein is copyright James R Miller and/or Karl
+Meinzer.  It may be freely used for non-commercial purposes.  Please distribute
+it intact.
+
+Contents
+--------
+ReadMe1st.txt     This file
+ReadMe.txt        Notes issued with most recent releases of IPS-M  &  IPS-X
+
+IPS-M   <dir>
+  IPS-M.TXT       IPS-M support documentation
+  IPS-M.SRC       Source of IPS-M (in IPS of course)
+  M-BIN           IPS-M binary image
+  SYSPAGE.TXT     Sypage assignments
+  SCREEN.GIF      Screendump of IPS-M
+
+Design  <dir> 
+  IPSREF.TXT      IPS Language Reference Manual
+  PCode.txt       IPS Machine described in Pseudocode 
+  EMU.TXT         ARM processor machine code listing of the inner interpreter
+
+IPS-X   <dir>
+  IPS-X.TXT       IPS-X Cross Compiler support documentation
+
+Book   <dir>
+  BOOK.TXT        Description of IPS book, ordering info etc.
+  ERRATA.TXT      Errors in IPS book
+  
+
+
+Now what can I do?
+------------------
+This information, together with the book "IPS - High Level Programming of Small
+Systems" by Karl Meinzer (1978), ISBN 0-9530507-0-X  should enable anyone to
+create an IPS operating system for their favourite platform.
+
+Machine-specific program code would need to emulate a "computer" as
+follows:
+
+ - manage a 64Kbyte address space.
+ - 1024 bytes of the address space is the 64 char x 16 line IPS screen.
+ - read/write to the IPS screen
+ - read the keyboard
+ - read files as though they had been typed-in (for compilation of sources)
+ - maintain the 20ms clock UHR and stopwatches SW0-3
+ - run the inner interpreter or emulator loop
+ - contain code to execute the ~ 60 IPS primitives (the CODE routines)
+
+An example of this for ARM Risc processors is given in IPS-Design/EMU.TXT
+
+Need More Info?
+---------------
+There is a relative dearth of books about the detail of threaded languages,
+although Forth books abound.  The following is very good, and still obtainable
+if you search around:
+
+R G Loeliger, "Threaded Interpretive Languages", McGraw-Hill 1980.
+ISBN 0-07-038360-X 
+
+
+James Miller
+1997 Jul 28 
+2001 Jun 16  (updated)
+2002 Sep 01  (for DOS, filenames changed to 8.3;   .doc => .txt)
+<end>

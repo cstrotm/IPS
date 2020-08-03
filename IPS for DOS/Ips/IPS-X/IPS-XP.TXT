@@ -1,0 +1,236 @@
+IPS-XP.TXT                                                    2002 Aug 30
+
+     
+                         IPS-XP   Cross-Compiler
+                         ----------------------
+ 
+              This document (C) 1997-2002 James Miller G3RUH
+
+                edited for ipsdos by Paul Willmott VP9MU
+
+
+This documents the IPS-XP Cross Compiler v1.0.4 for any Computer.
+Please read the whole of this file before you get hacking.
+
+A good understanding of IPS is assumed, and you are strongly advised to
+read the companion instructions supplied with normal IPS-Mp.
+
+
+To Run
+------
+
+From the MS-DOS command line enter: 
+
+ipsdos /X 
+
+and press <ret>
+
+To Use
+------
+Input, output and operation is as described in the book "IPS - High Level
+Programming of Small Systems" by Karl Meinzer (1978), ISBN 0-9530507-0-X.
+There are minor differences:
+
+ - Standard words are in German, (lower case).
+ - At errors, the offending word is displayed in inverse video and the cursor
+   placed at the start of the word.
+ - The cursor control keys may also be used.  
+
+OUTPUT: Is virtually identical to IPS-N for the Atari 800XL etc
+
+INPUT:  1. You enter commands by typing them in the usual way.
+
+        2. Or you can read a file.  For example, enter:
+
+          ~ ips-mp3.src ~ read   <ret>
+      
+Quiting
+-------
+
+Press Alt+X
+
+______________________________________________________________________________
+
+Source files
+------------
+
+Source files are located in the current directory.  Presently they are:
+
+   File           Description                                  Author
+   ------------------------------------------------------------------------ 
+   IPS-MP3.SRC    IPS-Mp for the IBM-PC (German)               jrm/pclw/sm
+   IPS-MP3E.SRC   IPS-Mp for the IBM-PC (English)              jrm/pclw/sm
+   ------------------------------------------------------------------------
+
+You may add to this list if you wish ...
+
+____________________________________________________________________________
+
+                   About the IPS-X Cross Compiler
+                   ------------------------------
+The cross compiler is the same as normal IPS-M except that:
+
+  a. All normal IPS words are in lower case, and letter-less words have an
+     "n" appended.  The string delimiter is ~ .  Examples:
+     
+        hier  $h weg  kon  dup  !b  je  ja?
+        :n  ;n  !n  'n  <n  =0n
+        ~ SOME TEXT ~
+  
+  b. Facilities for cross-compiling have been added.
+
+  c. The chain consists of the compiler and display handler only.
+     Thus  einh and  aush  have been omitted.
+
+At start up, you may use IPS exactly as normal, subject to the word
+translation as above.
+
+
+1. How it works
+   ------------
+All versions of IPS include a powerful compiler, so it is natural to use
+this power to take IPS source files for an alien machine and cross assemble
+them to a target image.
+
+Thus in Cross-Compile Mode, commands in IPS are used for directives and
+expressions.  In this way, the alien source files may be written in a
+quasi-IPS style, interpreted by the cross-compiler and deposited in the
+target image as a binary for direct loading to the target machine.
+
+The target memory area is specified by the variable $O, and is #4000 by
+default.  This value is chosen to be memorable, and it is well clear of
+IPS' own workspace.  You can change it if you wish.
+
+The system is in Cross-Compile mode whenever $O is non-zero, and in
+Normal mode when $O = 0.
+
+The value returned by  hier  is the LOGICAL address associated with the
+current mode.  Thus when in X-compile mode you may write a directive such
+as #200 $h !n .  This will make the target build continue at logical
+address #200.  But the X-compiler maps this to PHYSICAL address #4200. 
+
+
+2. Control
+   -------
+Three commands are provided to switch Modes.  They are of type :int and so
+may not be used inside definitions.
+
+ X>   "X go".    Enter X (cross-compile) mode, toggling all pointers
+ 
+ <X   "From X".  Exit  X mode, toggling all pointers
+
+ X>>  "X start". Enter X mode, initialising all pointers.
+
+
+X> and <X are complementary, and you may use them freely to swap modes
+without affecting either the normal IPS build or the target build as
+appropriate.  If you are already in X mode, the command X> will be ignored
+(inverse echo).  Likewise, from normal mode  <X is meaningless.
+
+X>> is used to start up cross compilation mode from scratch, and would
+normally be included at the start of the first alien source file.
+
+The sequence  X>>  <X is equivalent to a soft reset; pointers are
+initialised, but the target area is not wiped, and any new normal words are
+retained.
+
+
+3. Utilities
+   ---------
+These words are provided for you to include in alien source files.
+
+$OC   Converts a logical address to physical address.
+       <addr> $OC
+       <addr + value of $O> 
+
+!O    Store a word in image workspace.
+       <n> <addr> !O           n stored at (addr + value of $O)
+       <empty>
+
+
+4. Using the Cross-Compiler
+   ------------------------
+This is best explained by examples.
+
+4.1. Compiling IPS-M
+     ---------------
+IPS-M for Acorn Risc Computers needs an assembler, though only the four
+words    i>  <i  ,  rcode .  These are simply affixed to the start of the
+source file, which may then be compiled in one operation:
+
+  ~ IPS-MP3.SRC ~ read
+  
+The output is a binary called MP-bin.  It's suggested you study 
+IPS-MP3.SRC to understand the basic compiler directives.
+
+If you want to repeat the above, first do    weg/ab i>    to delete the
+so-called "assembler", which is the first definition in the source file.
+
+5. Cautions/Tips
+   -------------
+1. Note that a command file can only invoke ONE other command file, and that
+   MUST be the LAST item in the file.  This is because the invoked file will
+   overwrite the calling file that's presently in the input buffer.
+
+2. IPS can only search for words in the target area when in X-compile mode.
+
+3. ?n <name>  returns the physical address of name's parameter field,
+              subject to 2 above.
+
+4. weg/ab <name> may be used conventionally, subject to 2 above.
+                 Fortunately, if you delete a normal definition you won't
+                 delete any following target material ...
+
+5. Do not place a :n definition at logical address #0, otherwise it
+   cannot be found during a name search.  To obviate that, a X-compile mode
+   default value of $h = 2 is used.  You are unlikely to want to put a
+   definition at #0, as that page is usually used for system purposes,
+   not IPS definitions.
+   
+6. Don't try to execute words belonging to the target image!  They are
+   meaningless commands to the host IPS, so you will probably crash the
+   system.  A common error is to type WEG (which is probably a target
+   definition) when you meant "weg".  To avoid this sort of finger trouble,
+   always use <X to return to normal mode before you start messing about.
+   Invocations of target words will then be ignored.
+
+   Another slip is to type 0 1 2 4 when still in X-compile mode.  0 1 2 4 are
+   defined as kon under IPS-C3, so if you are still in X-compile mode and you
+   use (say) 0, you will crash the system.  Use #0 or 00 etc instead.
+
+
+Directive Translations
+----------------------
+The ability to use words :n  var kon   42  ja? je nun +nun ;n   as
+convenient directives in an alien source file is very useful.  But it does
+also mean that a translation table is needed so that in Cross-compile mode
+target words are used rather than host words.
+
+For example, in Normal mode,   #1234  would compile to  [2bliteral] [#1234]
+whereas in X-compile mode it must compile to [2BLITERAL] [#1234] where the
+uppercase word is already defined for the target.
+
+To this end, a translation table is maintained in the 12 word field $ccodes.
+The addresses carried in it are:
+
+  $ccodes    Target word
+   offset      address
+ ----------------------------
+      0        DEFEX        )
+      2        VAREX        )
+      4        CONSEX       )
+      6        2BLITERAL    )
+      8        1BLITERAL    )    These addresses have
+     10        BRONZ        )    to be planted by !n  
+     12        JUMP         )    directives in the   
+     14        $JEEX        )    target source file  
+     16        LOOPEX       )
+     18        +LOOPEX      ) 
+     20        RETEX        ) 
+     22        - see below      
+ ----------------------------
+
+ $ccodes+22 is used as the name link list pointer for the target during
+ X-compilation, instead of the normal   link .
+
+<end>

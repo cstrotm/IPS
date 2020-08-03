@@ -1,0 +1,17 @@
+Errors in book  "IPS - High Level Programming of Small Systems" by Karl Meinzer
+(1978), ISBN 0-9530507-0-X
+
+
+Page 6.    Three references to  -50  should be  -40 
+
+Page 74.   Compiler action matrix; the numbers #40 and #80  should be swapped.
+
+Page 104.  Remarks.  #DF should be #D3         
+
+
+
+Last updated:
+
+1997 Jul 28 [Mon] 1402 utc by JRM
+
+<end>

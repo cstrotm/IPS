@@ -1,0 +1,733 @@
+
+( ------------------------------------------------------ )
+(          IPS-Xp Version 1.0.6   September 22, 2002     )
+(                 Paul C. L. Willmott, VP9MU             )
+( ------------------------------------------------------ )
+(                2002-09-22 align added PCLW             )
+( ------------------------------------------------------ )
+              
+ECHO-OFF
+
+" Wiping memory image ... " ECHO
+
+#0000 !$H
+0 HIER ! HIER DUP 1 + #3FFF L>>>               ( Wipe memory )
+
+" Filling screen buffer with spaces ... " ECHO
+
+#20 HIER ! HIER DUP 1 + #3FF L>>>
+
+" Writing splash ... " ECHO
+
+" IPS-Xp 2002-09-22 1.0.6 " #01D5 !T                  ( Identifier )
+
+" Initialising Stop-Watches ... " ECHO
+
+#041E !$H                                     ( Stop watches )
+1 , 0 , 0 , 0 ,
+1 , 0 , 0 , 0 ,
+1 , 0 , 0 , 0 ,
+1 , 0 , 0 , 0 ,
+
+( #500-#50F free for implementor's use )
+
+" Skipping memory-mapped virtual machine area ... " ECHO
+
+#0510 !$H                                    ( Code routines )
+
+" Defining virtual machine primitives ... " ECHO
+
+#00  RCODE    rumpelstilzchen    #04  RCODE    retex
+#05  RCODE    @n                 #06  RCODE    @b
+#07  RCODE    !n                 #08  RCODE    !b
+#09  RCODE    1bliteral          #0A  RCODE    2bliteral
+#0B  RCODE    bronz              #0C  RCODE    jump
+#0D  RCODE    weg                #0E  RCODE    pweg
+#0F  RCODE    +n                 #10  RCODE    -n
+#11  RCODE    dup                #12  RCODE    pdup
+#13  RCODE    vert               #14  RCODE    zwo
+#15  RCODE    rdu                #16  RCODE    rdo
+#17  RCODE    i                  #18  RCODE    s>r
+#19  RCODE    r>s                #1A  RCODE    =0n
+#1B  RCODE    >0n                #1C  RCODE    <0n
+#1D  RCODE    >=u                #1E  RCODE    f-vergl
+#1F  RCODE    nicht              #20  RCODE    und
+#21  RCODE    oder               #22  RCODE    exo
+#23  RCODE    bit                #24  RCODE    cbit
+#25  RCODE    sbit               #26  RCODE    tbit
+#27  RCODE    $jeex              #28  RCODE    loopex
+#29  RCODE    +loopex            #2A  RCODE    >>>n
+#2B  RCODE    p*                 #2C  RCODE    p/mod
+#2D  RCODE    $tue               #2E  RCODE    $polyname
+#2F  RCODE    $scode             #30  RCODE    $cscan 
+#31  RCODE    chs                #32  RCODE    cyc2
+#33  RCODE    $closefile         #34  RCODE    $openfile
+#35  RCODE    $osclicode         #36  RCODE    $loadcode
+#37  RCODE    $savecode          #38  RCODE    $ipsetzen
+#39  RCODE    $psholen           #3A  RCODE    $pssetzen
+#3B  RCODE    rp-loop            #3C  RCODE    tr-loop
+#3D  RCODE    3v3              ( #3E  RCODE    $defcharcode )
+#3F  RCODE    p+                 #40  RCODE    p-
+
+#80  RCODE   uhr-lock            #81   RCODE   sleep-time
+#82  RCODE   !pcportb            #83   RCODE   !pcport
+#84  RCODE   @pcmemb             #85   RCODE   @pcmem
+#86  RCODE   !pcmemb             #87   RCODE   !pcmem
+#88  RCODE   auxoutb             #89   RCODE   auxinB
+#8A  RCODE   auxincount          #8B   RCODE   auxoutcount
+#8C  RCODE   fopen               #8D   RCODE   fclose
+#8E  RCODE   fread               #8F   RCODE   fwrite
+#90  RCODE   fseek               #91   RCODE   fgetb
+#92  RCODE   fputb               #93   RCODE   fflush
+#94  RCODE   fdelete             #95   RCODE   frename
+#96  RCODE   feof                #97   RCODE   auxread
+#98  RCODE   auxwrite            #99   RCODE   auxclrbuf
+#9A  RCODE   @pcportb            #9B   RCODE   @pcport
+#9C  RCODE   defkeymacro
+
+" Defining macro translation table offset constants ... " ECHO
+
+( Offset Constants for translation tables )
+
+:MACRO DEFEX      0 ;MACRO
+:MACRO VAREX      2 ;MACRO
+:MACRO CONSEX     4 ;MACRO
+:MACRO 2BLITERAL  6 ;MACRO
+:MACRO 1BLITERAL  8 ;MACRO
+:MACRO BRONZ     10 ;MACRO
+:MACRO JUMP      12 ;MACRO
+:MACRO $JEEX     14 ;MACRO
+:MACRO LOOPEX    16 ;MACRO
+:MACRO +LOOPEX   18 ;MACRO
+:MACRO RETEX     20 ;MACRO
+
+( The $CCODES field must be populated before a numeric literal )
+( value is used with a definition. Also the order is mandatory )
+( as the Assembler uses these codes.                           )
+
+" Declaring translation tables ... " ECHO
+
+( A hacky way of setting a field before the compiler knows about them )
+
+HIER
+24 FELD $ccodes  ( directive translation table )
+6 + 3 VERT !     ( set correct for varex )
+
+HIER
+24 FELD $CCODES
+6 + DUP 3 VERT ! ( set correct for varex )
+
+" Setting DEFEX, CONSEX & VAREX in translation tables ... " ECHO
+
+( set values for definitions, constants & variables )
+
+2 + DUP DEFEX  + 1 VERT !
+    DUP VAREX  + 3 VERT !
+        CONSEX + 2 VERT !
+
+" Populating translation table with primitive code addresses ... " ECHO
+
+' 2bliteral
+' 1bliteral
+' bronz
+' jump
+' $jeex
+' loopex
+' +loopex
+' retex
+' $CCODES 8 + 8 !FK
+
+" Defining compiler constants and variables ... " ECHO
+
+#0418 KON uhr
+#041E KON su0
+#0422 KON su1
+#0426 KON su2
+#042A KON su3
+#0402 KON kette
+
+:MACRO ; A> ' retex $DEP ;MACRO
+
+( IPS-Xp general definitions )
+
+" Declaring general definitions ... " ECHO
+
+: >n     -n >0n                ;
+: <>n    -n =0n nicht          ;
+: =n     -n =0n                ;
+: >=n    -n <0n nicht          ;
+: <n     -n <0n                ;
+: <=n    -n >0n nicht          ;
+: <>0n   =0n nicht             ;
+: *n     p* weg                ;
+: p/     p/mod weg             ;
+: /mod   #0 vert p/mod         ;
+: /n     /mod weg              ;
+: mod    /mod vert weg         ;
+: +!n    dup @n rdo +n vert !n ;
+
+( Compiler constants )
+
+#01C0  KON  sysline        ( Posn.  buffer for messages )
+#042E  KON  readyflag      ( Compiler free to process input )
+#042F  KON  $pe            ( Pointer to end of input )
+#0431  KON  $pi            ( Compiler read pointer     )
+#0433  KON  $p1            ( Compiler parsing position )
+#0435  KON  $p2            ( End of block reached flag )
+#0437  KON  $p3            ( Link pointer for $SUCH  )
+#0439  KON  $h             ( Pointer to memory position )
+#043B  KON  loadflag       ( Input coming from file )
+#FFF8  KON  $sl            ( Stack limit )
+#FF00  KON  $ml            ( Memory limit 64K )
+#0000  KON  $ll            ( End of IPS )
+
+' $CCODES 2 + DUP DUP
+DEFEX  + @ KON defex
+VAREX  + @ KON varex
+CONSEX + @ KON consex
+
+#0000  KON  tv0            ( 1st   TV screen line position )
+#0100  KON  tv4            ( 4th   TV screen line position )
+#0200  KON  tv8            ( 8th   TV screen line position )
+#0000  KON  $tvs           ( Stack TV screen line position )
+#03FF  KON  $tve           ( Last  TV screen line position )
+
+                    ( The Compiler )
+                    ( ------------ )
+
+#0004 FELD $nd
+#0001 VAR $rs
+#0000 VAR $f1
+#0000 VAR $f2
+#0000 VAR $kk
+#0000 VAR basis
+#0000 VAR bem
+#0001 VAR bea
+#0000 VAR eingabezahl
+#0000 VAR z-lesen
+#0000 VAR compileflag
+#0000 VAR $v1
+#0000 VAR link
+
+#1 VAR align ( byte/word alignment for code and data structures )
+
+( Error messages )
+
+" Defining error messages ... " ECHO
+
+( Default language / Alternative language )
+
+16 FELD stackmessage   " STAPEL LEER !    " ' stackmessage   02 + !T
+16 FELD l-stackmessage " STACK EMPTY !    " ' l-stackmessage 02 + !T
+16 FELD memmessage     " SPEICHER VOLL !  " ' memmessage     02 + !T
+16 FELD l-memmessage   " MEMORY FULL !    " ' l-memmessage   02 + !T
+16 FELD namemessage    " NAME FEHLT !     " ' namemessage    02 + !T
+16 FELD l-namemessage  " NAME MISSING !   " ' l-namemessage  02 + !T
+16 FELD strucmessage   " STRUKTURFEHLER ! " ' strucmessage   02 + !T
+16 FELD l-strucmessage " STRUCTURE ERROR! " ' l-strucmessage 02 + !T
+16 FELD textmessage    " TEXTFEHLER !     " ' textmessage    02 + !T
+16 FELD l-textmessage  " TEXT-ERROR !     " ' l-textmessage  02 + !T
+16 FELD rsmessage      " UNZUL. NAME !    " ' rsmessage      02 + !T
+16 FELD l-rsmessage    " DUPLICATE NAME ! " ' l-rsmessage    02 + !T
+
+" Defining control structure macros ... " ECHO
+
+:MACRO JA?          A> ' bronz <A $DEP HIER H2INC                       ;MACRO
+:MACRO DANN         HIER VERT !                                         ;MACRO
+:MACRO NEIN:        A> ' jump <A $DEP HIER H2INC VERT DANN              ;MACRO
+:MACRO JE           A> ' $jeex <A $DEP HIER H2INC                       ;MACRO
+:MACRO NUN          A> ' loopex <A $DEP DUP HIER VERT ! A> 2 + $DEP <A  ;MACRO
+:MACRO +NUN         A> ' +loopex <A $DEP DUP HIER VERT ! A> 2 + $DEP <A ;MACRO
+:MACRO ANFANG       HIER                                                ;MACRO
+:MACRO ENDE?        A> ' bronz <A $DEP $DEP                             ;MACRO
+:MACRO DANN/NOCHMAL VERT A> ' jump <A $DEP $DEP HIER VERT !             ;MACRO
+
+( X-Compiler Extensions )
+
+" Defining X-compiler extensions ... " ECHO
+
+0 VAR $O ( Compile Zone Address )
+#043C KON $Os ( Link Offset for $such etc )
+
+: $OC  $O @n +n ; ( Logical to physical conversion )
+: $OC- $O @n -n ; ( Physical to logical conversion )
+: !O   $OC !n   ; ( Store word at an offset address )
+
+    0 VAR $nh ( Temp $h from normal mode )
+    2 VAR $Oh ( Temp $h from offset mode )
+#4000 VAR $Ot ( Temp store for $O )
+#4000 KON $OZ ( Default offset zone )
+
+( Return code address depends upon compile or )
+( normal mode )
+
+: code-addr
+
+  $O @n =0n JA?
+     $CCODES
+  NEIN:
+     $ccodes
+  DANN
+  +n @n
+
+; ( code-addr )
+
+( Returns link address depends upon compile or )
+( normal mode )
+
+: link-addr
+
+  $O @n =0n JA?
+     link
+  NEIN:
+     $ccodes 22 +n
+  DANN
+
+; ( link-addr )
+
+
+( Compiler definitions )
+
+" Defining Compiler definitions ... " ECHO
+
+: incr   dup  @n  1  +n  vert  !n ;
+
+: hier   $h  @n  ;
+
+: h2inc  hier  2  +n  $h  !n  ;
+
+: $dep   hier $OC !n h2inc ;
+
+: $cen   dup  $ipsetzen  dup  @b  #80  oder  zwo  !b
+         $pi  !n  $tve  $pe  !n 0  readyflag  !b  ;
+
+: ie
+
+  $p1 @n dup $pi @n 1 -n
+  JE  i  @b  #80  exo  i  !b
+  NUN
+  $cen weg $closefile
+
+; ( ie )
+
+0  KON  $lang                     ( Messages language switch )
+
+: syswrite $lang +n sysline 16 >>>n 0 ie ;
+
+: l>>> ANFANG dup 256 >n JA? 256 -n s>r pdup 256 >>>n
+                            256 +n vert 256 +n vert r>s
+       DANN/NOCHMAL dup >0n JA?  >>>n
+                           NEIN: pweg weg
+                           DANN ;
+
+: $such
+
+  $O @n =0n JA?
+     link @n $p3 !n 0 $Os !n $scode
+  NEIN:
+     $ccodes 22 +n @n $p3 !n $O @n $Os !n $scode
+     dup =0n JA?
+         weg
+         link @n $p3 !n 0 $Os !n $scode
+     DANN
+  DANN
+
+; ( $such )
+
+: $name   0   readyflag @b 0 $p2 !n
+       JA? 1 $cscan >0n
+          JA? $pi @n $p1 !n
+              2 $cscan pweg #CE57 #8D
+              $p1 @n $pi @n zwo -n dup 63 >n JA? weg 63
+                                             DANN
+              dup $nd !b 1 -n zwo +n
+              JE i @b $polyname
+              NUN $nd 3 +n !b $nd 1 +n !n 1
+          DANN
+       DANN ;
+
+: $zahl 1 ( OK ) 0 ( ANF. ) $pi @n 1 -n $p1 @n
+  #2D zwo @b =n JA?    1 +n  -1 s>r ( NEG ) 10 ( BASIS )
+               NEIN:        1 s>r ( POS )
+                    #23 zwo @b =n
+                    JA?   1 +n            16
+                    NEIN: #42 zwo @b =n
+                          JA?    1 +n      2
+                          NEIN:           10
+               DANN DANN  DANN   basis !n
+ vert JE basis @n *n i @b dup #3A <n JA? #30 -n
+                                  DANN
+                        dup #40 >n JA? #37 -n
+                                  DANN
+         dup basis @n >=n zwo <0n oder JA? ( FEHLER ) weg 0 rdu
+                                    DANN +n
+      NUN r>s *n vert ;
+
+: compiler
+
+  $name JA? $such 
+
+     1 ( FUER WEITER ) bem @b
+     JA? 
+         zwo ' rumpelstilzchen
+         =n JA? ( RUMP. ) 
+             0 bem !n
+         NEIN: ( NICHT RUMP. ) 
+             z-lesen @n JA?   
+                 pweg 0 1
+             NEIN: 
+                 zwo bea @n <n
+                 JA? ie weg 0
+                 DANN
+             DANN
+         DANN
+     DANN
+
+     JA? ( WEITERFLAG ? ) 
+     
+         dup =0n JA? ( NUMBERPROCESSOR ) 
+
+            weg $zahl JA? 
+
+               compileflag @b JA? 
+
+                   dup #FF00 und =0n align @n 01 =n und JA?
+                      1BLITERAL code-addr $dep
+                      hier $OC !b $h incr
+   	             NEIN:
+                      2BLITERAL code-addr $dep $dep
+                   DANN
+
+               NEIN:
+
+                   bem @b JA?
+                       eingabezahl !n 0 z-lesen !n
+                   DANN
+
+               DANN
+
+            NEIN:
+
+               ie
+
+            DANN
+
+         NEIN: ( FOUNDPROCESSOR ) 
+         
+            dup 6 -n @b #C0 und
+
+            compileflag @b oder
+
+            dup 1 =n JA? 
+
+                weg hier $OC $ml >=u JA?
+                    weg memmessage syswrite
+                NEIN:
+                    $OC- $dep
+                DANN
+
+            NEIN: 
+
+                dup #80 =n vert #C1 =n oder JA?
+                   ie
+                NEIN: 
+                    dup $O @n dup =0n rdu <n oder JA?
+                        r>s $v1 !n $tue $v1 @n s>r
+                    NEIN:
+                        ie
+                    DANN
+                DANN
+
+            DANN 
+         
+         DANN 
+
+         $psholen $sl >n JA? $sl $pssetzen
+             stackmessage syswrite                     
+             weg $f1
+         DANN 
+
+      DANN 
+  
+  DANN
+
+  readyflag @b $p2 @b und
+   
+  JA? #20 tv8 !b tv8 dup 1 +n $pi @n tv8 -n 1 -n l>>>
+      tv8 $cen
+  DANN  
+
+; ( compiler )
+
+" Defining Compiler Auxiliary Routines ... " ECHO
+
+             ( Compiler Auxiliary routines )
+             ( --------------------------- )
+
+: entrysetup 
+
+       align @n #02 =n hier $OC #0001 und <>0n
+       und JA? 
+           $h incr 
+	 DANN
+
+       $f1 $kk !n $name dup
+       JA?   $such =0n nicht $rs @n und
+             JA?   rsmessage syswrite weg  0
+             NEIN: hier dup $OC $kk !n link-addr @n h2inc h2inc
+                   $dep $nd zwo $OC 4 >>>n link-addr !n hier vert h2inc
+             DANN
+       NEIN: namemessage syswrite
+       DANN ;
+
+: $getadr 
+
+  $name JA?   
+      $such dup =0n
+      JA?   
+         ie 0
+      NEIN:        
+         1
+      DANN
+  NEIN: 
+      namemessage syswrite 0
+  DANN 
+
+; ( $getadr )
+
+:HPRI 'n     
+
+  $getadr JA?
+      $OC- compileflag @n JA?
+          2BLITERAL code-addr $dep $dep
+      DANN
+  DANN 
+  
+; ( 'n )
+
+:PRIOR ;n     
+
+  RETEX code-addr $dep 0 compileflag !b
+  $f2 <>n JA? 
+      strucmessage $lang +n sysline #20 +n 16 >>>n
+      link-addr @n dup $h !n 4 +n @n link-addr !n     
+      0 ie
+  DANN 
+  
+; ( ;n )
+
+:INT :n 
+
+  entrysetup JA? 
+      DEFEX code-addr vert !O 1 compileflag !b $f2
+  DANN 
+  
+; ( :n )
+
+: primodify $kk @n @b oder $kk @n !b ;
+
+:INT :prior A> ' :n $DEP <A #80 primodify ;
+:INT :hpri  A> ' :n $DEP <A #40 primodify ;
+:INT :int   A> ' :n $DEP <A #C0 primodify ;
+
+:PRIOR ja?          BRONZ code-addr $dep hier h2inc ;
+:PRIOR dann         hier vert !O ;
+:PRIOR nein:        JUMP code-addr $dep hier h2inc vert A> ' dann $DEP <A ;
+:PRIOR je           $JEEX code-addr $dep hier h2inc ;
+:PRIOR nun          LOOPEX code-addr $dep dup A> ' dann $DEP <A 2 +n $dep ;
+:PRIOR +nun         +LOOPEX code-addr $dep dup A> ' dann $DEP <A 2 +n $dep ;
+:PRIOR anfang       hier ;
+:PRIOR ende?        BRONZ code-addr $dep $dep ;
+:PRIOR dann/nochmal vert JUMP code-addr $dep $dep A> ' dann $DEP <A ;
+
+:INT kon  entrysetup JA?
+             CONSEX code-addr vert !O $dep
+          DANN ;
+
+:INT var  entrysetup JA?
+             VAREX code-addr  vert !O $dep
+          DANN ;
+
+:INT feld entrysetup JA?
+             VAREX code-addr vert !O hier +n $h !n
+          DANN ;
+
+' tv4 2 + @ VAR sp               (  Screen Pointer )
+
+: !char  sp @n !b sp incr ;
+
+: tliteral  i 1 +n r>s @b pdup +n s>r sp @n pdup +n sp !n
+            vert >>>n ;
+
+:HPRI ~ $pi incr $pi @n 0 zwo dup 257 +n dup $tve >n
+                                        JA? weg $tve DANN
+        JE $pi @n @b #7E =n ( change " to ~ )
+           JA?
+           r>s pweg 1 i s>r
+           DANN  $pi incr
+        NUN
+        zwo $pi @n 2 -n vert -n dup >0n rdo und
+        JA?  compileflag @n
+             JA?
+               s>r i ( ' ) tliteral $dep hier !b
+               $h incr hier i >>>n hier  r>s +n $h !n
+             DANN
+        NEIN:   textmessage syswrite vert weg
+        DANN   ;
+
+:INT !t  vert  >>>n ;
+
+: leerz  s>r sp @n #20 zwo !b dup 1 +n r>s 1 -n l>>> ;
+
+:INT ok   sp @n sysline sp !n  #40 leerz  sp !n  ;
+
+: !fk    s>r i 2 *n +n 1 r>s JE 2 -n dup s>r !n r>s
+                           NUN weg ;
+
+: wand basis @n 10 =n JA?   dup ( ZAHL ) <0n
+                          JA? chs #2D ( - ) !char
+                          DANN 10000 0 ( W.-ANFANG )
+                    NEIN: 16 basis !n #23 ( # ) !char
+                          #1000 1 ( W.-ANFANG )
+                    DANN  s>r
+   ANFANG vert zwo /mod vert
+            i nicht JA?  dup >0n JA? r>s weg 1 s>r
+                    DANN        DANN
+                  i JA?  dup  #30 +n dup #39 >n
+                                    JA? 7 +n
+                                    DANN !char
+                    DANN
+                    weg vert basis @n /n dup =0n
+   ENDE? pweg r>s nicht JA? #30 !char
+                        DANN ;
+
+: zeig-stapel
+   $p2 @n JA?
+         sp @n s>r  $tvs sp !n #80 leerz
+    $psholen $sl zwo -n dup 32 >n JA? weg 32
+                                DANN  s>r i +n
+    ANFANG i >0n
+      JA? dup i -n dup 1 +n @b 256 *n vert @b +n r>s 2 -n s>r
+        $tvs i 4 *n +n sp !n  wand
+      DANN/NOCHMAL
+    r>s  pweg r>s sp !n
+   DANN ;
+
+:INT ?n  
+
+   $getadr JA? 
+       2 +n
+   DANN  
+   
+; ( ?n )
+
+: schreib s>r sp @n i >>>n sp @n r>s +n sp !n ;
+
+:INT weg/ab
+   
+   $getadr JA?  
+       dup $ll vert >=u JA?    
+           ie
+       NEIN:  
+           2 -n dup @n link-addr !n $OC- 4 -n $h !n
+       DANN
+   DANN  
+   
+; ( weg/ab )
+                    ( End IPS-Xp )
+
+" File handling, utilities & extensions ... " ECHO
+
+      ( File handling, utilities and extensions )
+      ( --------------------------------------- )
+
+:INT aweg ( cls ) $sl  $pssetzen  ;       ( Clear Stack )
+
+:INT $save  $savecode      dup  =0n  JA?   ie
+                                    NEIN: weg
+                                    DANN      ;
+
+:INT $load  $loadcode      dup  =0n  JA?   ie
+                                    NEIN: weg
+                                    DANN      ;
+
+:INT oscli $osclicode      dup  =0n  JA?   ie
+                                    NEIN: weg
+                                    DANN     ;
+
+:INT read  $openfile       dup  =0n  JA?   ie  0
+                                    DANN  loadflag  !b  ;
+
+: lang 
+
+  <>0n JA?    
+      l-stackmessage stackmessage -n
+  NEIN:  
+      0
+  DANN  
+  ' $lang 2 +n !n  
+  
+; ( lang )
+
+: fsize
+
+     0 rdu fopen dup
+     <>0n JA?
+         dup 0 0 rdo 2 vert fseek
+         =0n JA?
+             -1 -1
+         DANN
+         rdo fclose weg
+     NEIN:
+         weg -1 -1
+     DANN
+
+; ( fsize )
+
+" X compiler directives ... " ECHO
+
+:INT X> ( Enter Xcompile mode; toggle pointers )
+   $O @n =0n JA?
+      hier $Oh !n
+      $nh @n $h !n
+      $Ot @n $O !n
+   NEIN:
+      0 ie
+   DANN ;
+
+:INT <X ( Exit X-compile mode;toggle pointers )
+   $O @n <>0n JA?
+      hier $nh !n 
+      $Oh @n $h !n
+      $O @n $Ot !n
+      #0 $O !n
+   NEIN:
+      0 ie
+   DANN ;
+
+:INT X>> ( Enter X mode, initialising pointers )
+   $O @n =0n JA?
+      hier $Oh !n
+   DANN
+   #2 $h !n
+   #0 $ccodes 22 +n !n
+   $OZ $O !n ;
+
+             ( Build the rest of SYSPAGE etc )
+             ( ----------------------------- )
+
+" Building the rest of SYSPAGE etc ... " ECHO
+
+(  Construct chain )
+
+' compiler
+' zeig-stapel ' rumpelstilzchen DUP DUP DUP DUP DUP DUP
+' jump #0400   #0400 11 !FK
+
+HIER ' $ll #2 + !            ( Set $LL )
+HIER ' $h  #2 + @ !          ( Set $H )
+#200 ' $pi #2 + @ !          ( Initialise $PI )
+     ' $nd #2 + #043E !      ( Pointer for $SCODE )
+
+@LINK ' link #2 + !   ( Set LINK )
+

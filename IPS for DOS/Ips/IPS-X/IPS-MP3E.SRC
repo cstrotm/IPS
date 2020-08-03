@@ -1,0 +1,529 @@
+(  IPS-MP     For Any Machine     Version 2.05  2001 Jun 17   )
+(                     by James Miller                         )
+( ----------------------------------------------------------- )
+
+( Modified by PCLW 2001 Nov 17 )
+
+( Modified by PCLW 2001 Nov 24 - Keyboard Macros )
+( & Name Changes )
+
+( Translated to English IPS by Paul Willmott )
+( November 28, 2001                          )
+
+( Further translations per James Miller notes )
+( by PCLW November 29, 2001                   )
+
+( "Assembler" definitions for use by IPS-X cross compiler )
+
+  :prior i>      0 compileflag !b ;n
+  :int   <i      1 compileflag !b ;n
+  :n ,            hier $OC  !b $h incr ;n
+  :int rcode entrysetup ja? !O dann ;n
+  :int code  entrysetup ja? hier vert !O
+                        dann ;n
+
+~ Compiling IPS-MPE (IBM-PC) ~ #01D5 !t  ( Information splash )
+
+X>>                                      ( Enter compile mode )
+#0000 $h !n
+#0  hier !O  hier $OC dup 1 +n #3FFF l>>>       ( Wipe memory )
+                            ( Fill screen buffer  with spaces )
+#20 hier !O  hier $OC dup 1 +n  #3FF l>>>
+
+~ IPS-MPE 2001-Nov-29 ~   #01D5 $OC !t            ( Identifier )
+
+#041E $h !n                                    ( Stop watches )
+1 , 0 , 0 , 0 ,  1 , 0 , 0 , 0 ,
+1 , 0 , 0 , 0 ,  1 , 0 , 0 , 0 ,
+
+( DEFEX )  01                          ( Codes for x-compiler )
+( VAREX )  03
+( CONSEX ) 02  $ccodes  3 !fk
+
+( #500-#50F free for implementor's use )
+
+#0510 $h !n                                   ( Code routines )
+
+( When the emulator checks @ HP it must always point to       )
+( "excecutable code".  In this implementation the pointer is  )
+( used as an index into a jump table in the ARM code of the   )
+( IPS engine   M9097:!RunImage.  This is done for simplicity. )
+(                                                             )
+( IPS is 16-bit oriented, whereas the ARM is 32-bit oriented. )
+( Thus the  addressing advantages described in the book       )
+( "IPS - High Level Programming of Small Systems" by Karl     )
+( Meinzer [1978], ISBN 0-9530507-0-X  end of page 65, are not )
+( otherwise easily or, more important, robustly realised.     )
+
+#00  rcode    RUMPELSTILZCHEN    #04  rcode    RETEX
+#05  rcode    @                  #06  rcode    @B
+#07  rcode    !                  #08  rcode    !B
+#09  rcode    1BLITERAL          #0A  rcode    2BLITERAL
+#0B  rcode    BRONZ              #0C  rcode    JUMP
+#0D  rcode    DEL                #0E  rcode    PDEL
+#0F  rcode    +                  #10  rcode    -
+#11  rcode    DUP                #12  rcode    PDUP
+#13  rcode    SWAP               #14  rcode    SOT
+#15  rcode    RTU                #16  rcode    RTD
+#17  rcode    I                  #18  rcode    S>R
+#19  rcode    R>S                #1A  rcode    =0
+#1B  rcode    >0                 #1C  rcode    <0
+#1D  rcode    >=U                #1E  rcode    F-COMP
+#1F  rcode    INV                #20  rcode    AND
+#21  rcode    OR                 #22  rcode    XOR
+#23  rcode    BIT                #24  rcode    CBIT
+#25  rcode    SBIT               #26  rcode    TBIT
+#27  rcode    $JEEX              #28  rcode    LOOPEX
+#29  rcode    +LOOPEX            #2A  rcode    >>>
+#2B  rcode    P*                 #2C  rcode    P/MOD
+#2D  rcode    $TUE               #2E  rcode    $POLYNAME
+#2F  rcode    $SCODE             #30  rcode    $CSCAN 
+#31  rcode    CHS                #32  rcode    CYC2
+#33  rcode    $CLOSEFILE         #34  rcode    $OPENFILE
+#35  rcode    $OSCLICODE         #36  rcode    $LOADCODE
+#37  rcode    $SAVECODE          #38  rcode    $IPSETZEN
+#39  rcode    $PSHOLEN           #3A  rcode    $PSSETZEN
+#3B  rcode    RP-LOOP            #3C  rcode    TR-LOOP
+#3D  rcode    3V3              ( #3E  rcode    $DEFCHARCODE )
+#3F  rcode    P+                 #40  rcode    P-
+             ( End code routines for IPS-M )
+
+    ( Uncommitted definitions )
+
+( Stacey's IPS-Win extensions )
+
+#80   rcode   UHR-LOCK           #81   rcode   SLEEP-TIME
+
+( #80   rcode   $funct_00          #81   rcode   $funct_01 )
+
+( Paul's ipsdos extensions )
+
+#82   rcode   !PCPORTB       #83   rcode   !PCPORT
+#84   rcode   @PCMEMB        #85   rcode   @PCMEM
+#86   rcode   !PCMEMB        #87   rcode   !PCMEM
+#88   rcode   AUXOUTB        #89   rcode   AUXINB
+#8A   rcode   AUXINCOUNT     #8B   rcode   AUXOUTCOUNT
+#8C   rcode   FOPEN          #8D   rcode   FCLOSE
+#8E   rcode   FREAD          #8F   rcode   FWRITE
+
+#90   rcode   FSEEK          #91   rcode   FGETB
+#92   rcode   FPUTB          #93   rcode   FFLUSH
+#94   rcode   FDELETE        #95   rcode   FRENAME
+#96   rcode   FEOF           #97   rcode   AUXREAD
+#98   rcode   AUXWRITE       #99   rcode   AUXCLRBUF
+#9A   rcode   @PCPORTB       #9B   rcode   @PCPORT
+#9C   rcode   DEFKEYMACRO
+
+( #80   rcode   $funct_00          #81   rcode   $funct_01 )
+( #82   rcode   $funct_02          #83   rcode   $funct_03 )
+( #84   rcode   $funct_04          #85   rcode   $funct_05 )
+( #86   rcode   $funct_06          #87   rcode   $funct_07 )
+( #88   rcode   $funct_08          #89   rcode   $funct_09 )
+( #8A   rcode   $funct_0A          #8B   rcode   $funct_0B )
+( #8C   rcode   $funct_0C          #8D   rcode   $funct_0D )
+( #8E   rcode   $funct_0E          #8F   rcode   $funct_0F )
+
+( #90   rcode   $funct_10          #91   rcode   $funct_11 )
+( #92   rcode   $funct_12          #93   rcode   $funct_13 )
+( #94   rcode   $funct_14          #95   rcode   $funct_15 )
+( #96   rcode   $funct_16          #97   rcode   $funct_17 )
+( #98   rcode   $funct_18          #99   rcode   $funct_19 )
+( #9A   rcode   $funct_1A          #9B   rcode   $funct_1B )
+( #9C   rcode   $funct_1C          #9D   rcode   $funct_1D )
+( #9E   rcode   $funct_1E          #9F   rcode   $funct_1F )
+
+( IPS-M                                    1997 Jul 18 by JRM )
+#0418  kon  CLOCK
+#041E  kon  SW0
+#0422  kon  SW1
+#0426  kon  SW2
+#042A  kon  SW3
+#0402  kon  CHAIN
+0 kon 0   1 kon 1   2 kon 2   4 kon 4
+'n 2BLITERAL 'n 1BLITERAL 'n BRONZ 'n JUMP 'n $JEEX  'n LOOPEX
+'n +LOOPEX   'n RETEX  $ccodes 6 +n 8 !fk
+
+( IPS general definitions )
+:n >    - >0   ;n                :n <>    - =0 INV      ;n
+:n =    - =0   ;n                :n >=    - <0 INV      ;n
+:n <    - <0   ;n                :n <=    - >0 INV      ;n
+                                 :n <>0     =0 INV      ;n
+:n *       P* DEL ;n             :n P/     P/MOD DEL      ;n
+:n /MOD  #0 SWAP P/MOD ;n        :n /       /MOD DEL      ;n
+:n MOD  /MOD SWAP DEL ;n         :n +! DUP @ RTD + SWAP ! ;n
+
+( Compiler constants )
+#01C0  kon  SYSLINE        ( Posn.  buffer for messages )
+#042E  kon  READYFLAG      ( Compiler free to process input )
+#042F  kon  $PE            ( Pointer to end of input )
+#0431  kon  $PI            ( Compiler read pointer     )
+#0433  kon  $P1            ( Compiler parsing position )
+#0435  kon  $P2            ( End of block reached flag )
+#0437  kon  $P3            ( Link pointer for $SUCH  )
+#0439  kon  $H             ( Pointer to memory position )
+#043B  kon  LOADFLAG       ( Input coming from file )
+#FFF8  kon  $SL            ( Stack limit )
+#FF00  kon  $ML            ( Memory limit 64K )
+#0000  kon  $LL            ( End of IPS )
+
+$ccodes       @n kon DEFEX
+$ccodes 02 +n @n kon VAREX
+$ccodes 04 +n @n kon CONSEX
+
+#0000  kon  TV0            ( 1st   TV screen line position )
+#0100  kon  TV4            ( 4th   TV screen line position )
+#0200  kon  TV8            ( 8th   TV screen line position )
+#0000  kon  $TVS           ( Stack TV screen line position )
+#03FF  kon  $TVE           ( Last  TV screen line position )
+
+                    ( The Compiler )
+                    ( ------------ )
+
+#0004 feld $ND
+#0001 var $RS
+#0000 var $F1
+#0000 var $F2
+#0000 var $KK
+#0000 var BASE
+#0000 var LIM
+#0001 var LIS
+#0000 var N-INPUT
+#0000 var N-READ
+#0000 var COMPILEFLAG
+#0000 var $V1
+#0000 var LINK
+(  Error messages )
+(  Default language        Alternative language )
+16 feld STACKMESSAGE    16 feld L-STACKMESSAGE
+16 feld MEMMESSAGE      16 feld L-MEMMESSAGE
+16 feld NAMEMESSAGE     16 feld L-NAMEMESSAGE
+16 feld STRUCMESSAGE    16 feld L-STRUCMESSAGE
+16 feld TEXTMESSAGE     16 feld L-TEXTMESSAGE
+16 feld RSMESSAGE       16 feld L-RSMESSAGE
+
+~ SPEICHER VOLL !  ~   'n L-MEMMESSAGE   02 +n $OC !t
+~ MEMORY FULL !    ~   'n MEMMESSAGE     02 +n $OC !t
+~ NAME FEHLT !     ~   'n L-NAMEMESSAGE  02 +n $OC !t
+~ NAME MISSING !   ~   'n NAMEMESSAGE    02 +n $OC !t
+~ STAPEL LEER !    ~   'n L-STACKMESSAGE 02 +n $OC !t
+~ STACK EMPTY !    ~   'n STACKMESSAGE   02 +n $OC !t
+~ STRUKTURFEHLER ! ~   'n L-STRUCMESSAGE 02 +n $OC !t
+~ STRUCTURE ERROR! ~   'n STRUCMESSAGE   02 +n $OC !t
+~ TEXTFEHLER !     ~   'n L-TEXTMESSAGE  02 +n $OC !t
+~ TEXT-ERROR !     ~   'n TEXTMESSAGE    02 +n $OC !t
+~ UNZUL. NAME !    ~   'n L-RSMESSAGE    02 +n $OC !t
+~ DUPLICATE NAME ! ~   'n RSMESSAGE      02 +n $OC !t
+
+( Compiler definitions )
+:n INCR   DUP  @  1  +  SWAP  !  ;n
+:n HERE   $H  @  ;n
+:n H2INC  HERE  2  +  $H  !  ;n
+:n $DEP   HERE  !  H2INC  ;n
+:n $CEN   DUP  $IPSETZEN  DUP  @B  #80  OR  SOT  !B
+          $PI  !  $TVE  $PE  !  0  READYFLAG  !B  ;n
+:n IE  $P1 @ DUP $PI @ 1 -  je  I  @B  #80  XOR  I  !B
+                            nun  $CEN  DEL $CLOSEFILE  ;n
+
+#0  kon  $LANG                     ( Messages language switch )
+:n SYSWRITE $LANG +  SYSLINE 16 >>> 0 IE  ;n
+:n L>>> anfang DUP 256 > ja? 256 - S>R PDUP 256 >>>
+                            256 + SWAP 256 + SWAP R>S
+       dann/nochmal DUP >0 ja?  >>>
+                           nein: PDEL DEL
+                           dann ;n
+
+:n $SUCH  LINK @ $P3 ! $SCODE ;n 
+
+( :n $SUCH  LINK @ )
+(  anfang  DUP @B #3F AND $ND @B = SOT 1 + $ND 1 + )
+(    3 F-COMP AND INV )
+(  ja? ) ( INV GEF. ) ( 4 + @ )
+(      DUP =0 ja? ) ( LISTENENDE ) ( RETEX )
+(             dann )
+(  dann/nochmal 6 + ;n )
+
+
+
+
+:n $NAME   0   READYFLAG @B 0 $P2 !
+       ja? 1 $CSCAN >0
+          ja? $PI @ $P1 !
+              2 $CSCAN PDEL #CE57 #8D
+              $P1 @ $PI @ SOT - DUP 63 > ja? DEL 63
+                                         dann
+              DUP $ND !B 1 - SOT +
+              je I @B $POLYNAME
+              nun $ND 3 + !B $ND 1 + ! 1
+          dann
+       dann ;n
+
+:n $ZAHL 1 ( OK ) 0 ( ANF. ) $PI @ 1 - $P1 @
+  #2D SOT @B = ja?    1 +  -1 S>R ( NEG ) 10 ( BASE )
+               nein:        1 S>R ( POS )
+                    #23 SOT @B =
+                    ja?   1 +             16
+                    nein: #42 SOT @B =
+                          ja?    1 +       2
+                          nein:           10
+               dann dann  dann   BASE !
+ SWAP je BASE @ * I @B DUP #3A < ja? #30 -
+                                  dann
+                        DUP #40 > ja? #37 -
+                                  dann
+         DUP BASE @ >= SOT <0 OR ja? ( FEHLER ) DEL 0 RTU
+                                    dann +
+      nun R>S * SWAP ;n
+
+
+:n COMPILER  $NAME
+ja? $SUCH
+    1   ( FUER WEITER ) LIM @B
+        ja? SOT 'n RUMPELSTILZCHEN
+                = ja?   ( RUMP. ) 0 LIM !
+                  nein: ( INV RUMP. ) N-READ @
+                       ja?   PDEL 0 1
+                       nein: SOT LIS @ <
+                             ja? IE DEL 0
+                             dann
+                       dann
+                  dann
+        dann
+   ja?  ( WEITERFLAG ? )  DUP =0
+        ja? ( NUMBERPROCESSOR )
+         DEL $ZAHL
+          ja?  COMPILEFLAG @B
+            ja? DUP #FF00 AND
+             =0 ja? 'n 1BLITERAL $DEP
+                      HERE !B $H INCR
+                nein: 'n 2BLITERAL $DEP $DEP
+                dann
+            nein: LIM @B ja? N-INPUT ! 0 N-READ !
+                         dann
+            dann
+          nein: IE
+          dann
+      nein: ( FOUNDPROCESSOR ) DUP 6 - @B #C0 AND
+            COMPILEFLAG @B OR
+            DUP 1 =
+            ja?   DEL HERE $ML >=U ja?  DEL MEMMESSAGE SYSWRITE
+                                  nein: $DEP
+                                  dann
+            nein: DUP #80 = SWAP #C1 = OR
+                  ja?    IE
+                  nein: R>S $V1 ! $TUE $V1 @ S>R
+                  dann
+            dann
+      dann
+      $PSHOLEN $SL > ja? $SL $PSSETZEN STACKMESSAGE SYSWRITE
+                       DEL $F1
+                   dann
+   dann
+dann READYFLAG @B $P2 @B AND
+   ja? #20 TV8 !B TV8 DUP 1 + $PI @ TV8 - 1 - L>>> TV8 $CEN
+   dann  ;n
+
+
+             ( Compiler Auxiliary routines )
+             ( --------------------------- )
+
+:n ENTRYSETUP $F1 $KK ! $NAME DUP
+       ja?   $SUCH =0 INV $RS @ AND
+             ja?   RSMESSAGE SYSWRITE DEL  0
+             nein: HERE DUP $KK ! LINK @ H2INC H2INC
+                   $DEP $ND SOT 4 >>> LINK ! HERE SWAP H2INC
+             dann
+       nein: NAMEMESSAGE SYSWRITE
+       dann ;n
+
+:n $GETADR $NAME ja?   $SUCH DUP =0
+                             ja?   IE      0
+                             nein:         1
+                             dann
+                nein: NAMEMESSAGE SYSWRITE 0
+                dann ;n
+:hpri  '     $GETADR ja? COMPILEFLAG @
+                        ja? 'n 2BLITERAL $DEP $DEP
+                        dann
+                    dann ;n
+
+:prior  ;     'n RETEX $DEP  0 COMPILEFLAG !B
+         $F2 <>
+         ja? STRUCMESSAGE $LANG  + SYSLINE #20 + 16 >>>
+             LINK @ DUP $H ! 4 + @ LINK !      0 IE
+         dann ;n
+
+:int  :   ENTRYSETUP ja? DEFEX SWAP ! 1 COMPILEFLAG !B $F2
+                    dann ;n
+:n PRIMODIFY   $KK @ @B OR $KK @ !B ;n
+
+:int :PRIOR  i> 'n  : $dep <i      #80 PRIMODIFY ;n
+:int :HPRI   i> 'n  : $dep <i      #40 PRIMODIFY ;n
+:int :INT    i> 'n  : $dep <i      #C0 PRIMODIFY ;n
+
+:prior YES? 'n BRONZ $DEP HERE H2INC ;n
+:prior THEN  HERE SWAP ! ;n
+:prior NO: 'n JUMP $DEP HERE H2INC SWAP i> 'n THEN $dep <i ;n
+:prior EACH    'n $JEEX $DEP HERE H2INC ;n
+:prior NOW   'n LOOPEX  $DEP DUP i> 'n THEN $dep <i 2 + $DEP ;n
+:prior +NOW  'n +LOOPEX $DEP DUP i> 'n THEN $dep <i 2 + $DEP ;n
+:prior LBEGIN HERE ;n
+:prior LEND? 'n BRONZ $DEP $DEP ;n
+:prior THEN/REPEAT SWAP 'n JUMP $DEP $DEP i> 'n THEN $dep <i ;n
+
+:int CON        ENTRYSETUP ja? CONSEX SWAP ! $DEP
+                           dann ;n
+:int VAR        ENTRYSETUP ja? VAREX  SWAP ! $DEP
+                           dann ;n
+:int FIELD       ENTRYSETUP ja? VAREX  SWAP ! HERE + $H !
+                           dann ;n
+   'n TV4 02 +n $OC @n var SP               (  Screen Pointer )
+:n !CHAR  SP @ !B SP INCR ;n
+:n TLITERAL  I 1 + R>S @B PDUP + S>R SP @ PDUP + SP !
+            SWAP >>> ;n
+:hpri " $PI INCR $PI @ 0 SOT DUP 257 + DUP $TVE >
+                                        ja? DEL $TVE dann
+        je $PI @ @B #22 =
+           ja?
+           R>S PDEL 1 I S>R
+           dann  $PI INCR
+        nun
+        SOT $PI @ 2 - SWAP - DUP >0 RTD AND
+        ja?  COMPILEFLAG @
+             ja?
+               S>R I  'n TLITERAL $DEP HERE !B
+               $H INCR HERE I >>> HERE  R>S + $H !
+             dann
+        nein:   TEXTMESSAGE SYSWRITE SWAP DEL
+        dann   ;n
+
+:int !T  SWAP  >>>  ;n
+
+:n BLANKS  S>R SP @ #20 SOT !B DUP 1 + R>S 1 - L>>> ;n
+
+:int OK   SP @ SYSLINE SP !  #40 BLANKS  SP !  ;n
+
+:n !FC    S>R I 2 * + 1 R>S je 2 - DUP S>R ! R>S
+                           nun DEL ;n
+
+:n CONV BASE @ 10 = ja?   DUP ( ZAHL ) <0
+                          ja? CHS #2D ( - ) !CHAR
+                          dann 10000 0 ( W.-LBEGIN )
+                    nein: 16 BASE ! #23 ( # ) !CHAR
+                          #1000 1 ( W.-LBEGIN )
+                    dann  S>R
+   anfang SWAP SOT /MOD SWAP
+            I INV ja?  DUP >0 ja? R>S DEL 1 S>R
+                    dann        dann
+                  I ja?  DUP  #30 + DUP #39 >
+                                    ja? 7 +
+                                    dann !CHAR
+                    dann
+                    DEL SWAP BASE @ / DUP =0
+   ende? PDEL R>S INV ja? #30 !CHAR
+                        dann ;n
+
+:n STACKDISPLAY
+   $P2 @ ja?
+         SP @ S>R  $TVS SP ! #80 BLANKS
+    $PSHOLEN $SL SOT - DUP 32 > ja? DEL 32
+                                dann  S>R I +
+    anfang I >0
+      ja? DUP I - DUP 1 + @B 256 * SWAP @B + R>S 2 - S>R
+        $TVS I 4 * + SP !  CONV
+      dann/nochmal
+    R>S  PDEL R>S SP !
+   dann ;n
+
+:n $INSERT  SWAP  #7  AND    2  *  CHAIN  +  !  ;n
+
+:n $CHAINACT  COMPILEFLAG  @
+             ja?    'n  2BLITERAL  $DEP  $DEP
+                    'n  $INSERT    $DEP
+             nein:  SOT  #FFF8  AND  ( mask for 0-7 )
+                    =0  ja?    $INSERT
+                        nein:  IE
+                        dann
+             dann  ;n
+
+:hpri DCHN   'n  RUMPELSTILZCHEN  $CHAINACT  ;n
+:hpri INCH   $GETADR  ja?  $CHAINACT
+                      dann ;n
+
+:int ?  $GETADR  ja? 2 +
+                 dann  ;n
+
+:n WRITE    S>R SP @ I >>> SP @ R>S + SP ! ;n
+
+:int DEL/FROM
+   $GETADR  ja?  DUP  $LL  SWAP  >=U
+                 ja?    IE
+                 nein:  2  -  DUP  @  LINK  !  4  -  $H  !
+                 dann
+           dann  ;n
+                    ( End IPS-M )
+
+      ( File handling, utilities and extensions )
+      ( --------------------------------------- )
+
+:int CLS  $SL  $PSSETZEN  ;n                   (  Clear Stack )
+
+:int $SAVE  $SAVECODE      DUP  =0  ja?   IE
+                                    nein: DEL
+                                    dann      ;n
+
+:int $LOAD  $LOADCODE      DUP  =0  ja?   IE
+                                    nein: DEL
+                                    dann      ;n
+
+:int OSCLI $OSCLICODE      DUP  =0  ja?   IE
+                                    nein: DEL
+                                    dann     ;n
+
+:int READ  $OPENFILE       DUP  =0  ja?   IE  0
+                                    dann  LOADFLAG  !B  ;n
+(                                                )
+(:int DEFCHAR $DEFCHARCODE  DUP  =0  ja?   IE    )
+(                                    nein: DEL   )
+(                                    dann     ;n )
+
+:n LANG <>0  ja?    L-STACKMESSAGE  STACKMESSAGE  -
+             nein:  0
+             dann  'n $LANG 2 + !  ;n
+
+:n S-ON i> 'n 0           $dep  'n 2BLITERAL $dep
+           'n STACKDISPLAY $dep  'n $INSERT   $dep <i ;n
+
+             ( ipsdos extensions - PCLW )
+
+:n FSIZE
+
+     0 RTU FOPEN DUP
+     <>0 ja?
+         DUP 0 0 RTD 2 SWAP FSEEK
+         =0 ja?
+             -1 -1
+         dann
+         RTD FCLOSE DEL
+     nein:
+         DEL -1 -1
+     dann
+
+;n ( FSIZE )
+
+             ( Build the rest of SYSPAGE etc )
+             ( ----------------------------- )
+
+'n COMPILER                                (  Construct chain )
+'n STACKDISPLAY 'n RUMPELSTILZCHEN dup dup dup dup dup dup
+'n JUMP #0400   #0400 $OC 11 !fk
+
+             hier 'n $LL #2 +n !O                   ( Set $LL )
+      hier 'n $H  #2 +n $OC @n !O                    ( Set $H )
+      #200 'n $PI #2 +n $OC @n !O            ( Initialise $PI )
+           'n $ND #2 +n  #043E !O        ( Pointer for $SCODE )
+$ccodes 22 +n @n 'n LINK #2 +n !O                  ( Set LINK )
+               ( End of metacompilation )
+
+       ( Save IPS-M binary image; compilation off )
+#0000 $OC hier $OC  ~ IPS-MPE.BIN ~ $save   <X
+~ IPS-MPE (IBM-PC) compiled OK ~ #01D5 !t       ( info splash )

@@ -1,0 +1,560 @@
+                        IPS-X Assembler 1.0.1
+
+                   (c) 2001 Paul Willmott, VP9MU
+
+                         November 29, 2001
+
+
+The IPS-X Assembler (IPSXASM) is a simple utility designed to build
+IPS-X Cross Compiler kernals for IPS virtual machines. Though it
+forms part of the IPSDOS implementation, it may be used to create
+kernals for any 16-bit IPS virtual machine.
+
+IPSXASM converts the tokens and directives in the input source code
+file into the IPS-X kernal binary image. The source code syntax is
+similar to regular IPS-M, however IPSXASM is NOT a real complete IPS
+implementation.
+
+How to run
+----------
+
+IPSXASM is a MS-DOS command line utility. It does not understand 
+long filenames, only MS-DOS filenames in the 8.3 format. It must be
+executed in the same directory (folder) that contain the source
+code files to be assembled. 
+
+At the command line type:
+
+IPSXASM <filename> <ENTER>
+
+e.g.
+
+IPSXASM ips-xp.src <ENTER>
+
+Provided that the assembler does not find any errors in the source 
+code file, it will build the kernal binary and write 2 files to the
+current directory. In the above example, the files will be "ips-xp.bin" 
+and "ips-xp.src".
+
+The "ips-xp.bin" file is the assembled binary image file for the target
+emulator engine. The "ips-xp.log" file is a diagnostic log of the 
+final build. This contains 1). a hex dump of the binary image, 2). a
+dictionary index to the words and tokens assembled into the binary
+image, and 3). a disassembly listing showing exactly how the source
+code was translated into opcodes and data.
+
+Errors
+------
+
+The IPSXASM assembler is very dumb and hence the error reporting is 
+very limited. If the assembler finds something that it doesn't like
+then it will display a message then terminate. The ECHO facility
+should be used to locate the error location in the source code.
+
+Numbers & Tokens
+----------------
+
+The source code file contains numbers and tokens. Numbers can be 
+entered in decimal or hexadecimal. Hexadecimal numbers must be 
+prefixed by the # character. The assembler, like IPS, is a 16-bit
+system. Decimal numbers range from -32768 to 32767, and hexadecimal
+numbers from #0 to #FFFF.
+
+Tokens are any other combination of characters. Tokens and/or
+numbers must be separated by the space character. The assembler 
+is case sensitive. 
+
+Reserved Words
+--------------
+
+The assembler provides a number of reserved words which perform
+special functions within the assembly process. These are detailed
+later in this document. 
+
+Comments
+--------
+
+Comments may be included delimented by the "(" and ")" characters.
+
+e.g.
+
+( this is a comment )
+
+or
+
+(
+   this is a 
+   multiple line
+   comment 
+)
+
+Comments may not be nested, or contain the "(" or ")" characters.
+
+Macros
+------
+
+The assembler supports a simple text substitution system. A sequence
+of characters can be given a symbolic name. This symbolic name is
+called a macro. The macro can then be used later in the source code. 
+When the macro is encountered by the assembler the symbolic name is 
+replaced by the sequence of characters defined by the macro definition.
+
+e.g.
+
+:MACRO <macro-name> <character sequence> ;MACRO
+
+or
+
+:MACRO INCTOP 1 + ;MACRO
+
+When INCTOP is encountered subsequently in the source file it is replaced
+by " 1 + " and the assembly continues.
+
+Macros may be nested, i.e. macro names can be used in subsequent macro
+definitions.
+
+Normal/Assembler Mode
+---------------------
+
+The assembler has an internal workspace called the stack. This stack is 
+used for calculating values and storing return address for loops etc. The
+stack is implemented as last-in-first-out.
+
+When the assembler is in normal mode all numbers in the source code and
+pushed onto the stack. In assembler mode numbers are inserted into the
+binary image as literals.
+
+A number of assembler reserved words are provided to manipulate the
+stack contents.
+
+In a source file you may enter or leave assembler mode by use of the
+A> and <A reserved words.
+
+Reserved Word Reference
+=======================
+
+----------------------------------------------------------------------------
+
+(		Start Comment
+
+Action:
+
+All characters are ignored until a matching end comment word is encountered.
+
+----------------------------------------------------------------------------
+
+)		End Comment
+
+Action:
+
+Terminates a comment.
+
+----------------------------------------------------------------------------
+
+:MACRO	Start a macro definition
+
+Usage:
+
+:MACRO <macro-name> <macro-sequence> ;MACRO
+
+Action:
+
+Starts a macro definition. The sequence of characters following the macro 
+name are stored for later use. If the macro name is encountered subsequently
+in the source code file, then it is replaced by the macro-sequence text.
+
+----------------------------------------------------------------------------
+
+;MACRO	End a macro definition
+
+Action:
+
+Terminates the macro definition.
+
+----------------------------------------------------------------------------
+
+!$H		Stores the top of stack in $H
+
+Action:
+
+This pops the top of the stack into the $H system variable. The $H system
+variable points to the next free memory address in the binary image.
+
+----------------------------------------------------------------------------
+
+,		Write byte at top of stack to binary image
+
+Action:
+
+This pops the top of the stack and stores the least-significant byte in the binary 
+image at the address pointed to by the system variable $H. the value of $H is 
+incremented by 1.
+
+----------------------------------------------------------------------------
+
+@LINK		Pushes the value of the link pointer onto the stack
+
+Action:
+
+This pushes the value of the link pointer (a system variable), onto the stack. 
+The link pointer system variable contains the address in the binary image of
+the end of the linked list.
+
+----------------------------------------------------------------------------
+
+H2INC		
+
+Action:
+
+Increments the value of the $H system variable by 2.
+
+----------------------------------------------------------------------------
+
+$DEP
+
+Action:
+
+Writes the word at the top of the stack to the address in the binary image
+pointed to by the $H system variable. Then the $H system variable is 
+incremented by 2.
+
+----------------------------------------------------------------------------
+
+INCR
+
+Action:
+
+Pops a binary image address from the top of the stack, then increments the value
+in the binary image pointed to by that address.
+
+----------------------------------------------------------------------------
+
+KON
+
+Action:
+
+Creates an IPS constant definition in the binary image and adds the entry to the 
+linked list.
+
+Usage:
+
+<value> KON <name>
+
+or
+
+2 KON TWO
+
+In the above example a constant definition called "TWO" with the value 2 will
+be assembled into the binary image.
+
+----------------------------------------------------------------------------
+
+VAR
+
+Action:
+
+Creates an IPS variable definition in the binary image and adds the entry to
+the linked list.
+
+Usage:
+
+<initial value> VAR <name>
+
+or 
+
+3 VAR THREE
+
+In the above example a variable definition called "THREE" with the initial
+value 3 will be assembled into the binary image.
+
+----------------------------------------------------------------------------
+
+FELD
+
+Action:
+
+Creates an IPS field-variable definition in the binary image and adds the 
+entry to the linked list.
+
+Usage:
+
+<field-size> FELD <name>
+
+or 
+
+16 FELD ERR-MSG
+
+In the above example a field-variable definition 16 bytes long called 
+"ERR-MSG" will be assembled into the binary image.
+
+----------------------------------------------------------------------------
+
+RCODE
+
+Action:
+
+Creates an IPS definition with a reference to previously created executable
+code.
+
+Usage:
+
+<code-address> RCODE <name>
+
+or
+
+#0000 RCODE NOP
+
+In the above example an IPS definition called NOP will be created. The executable
+code will contain the address #0000. The address must point to executable
+code.
+
+Notes:
+
+The IPS-M series of virtual machines use imaginary ROMs to implement the IPS
+primitives. The executable code addresses in these cases are really indices
+into a jump table.
+
+----------------------------------------------------------------------------
+
+:
+
+Action:
+
+Create an IPS definition entry in the linked list and enter assembler mode.
+
+Usage:
+
+: <name>
+
+or
+
+: FUNC1
+
+In the above example a definition entry named FUNC1 will be created in the
+linked list in the binary image.
+
+----------------------------------------------------------------------------
+
+:HPRI
+
+----------------------------------------------------------------------------
+
+:PRIOR
+
+----------------------------------------------------------------------------
+
+:INT
+
+----------------------------------------------------------------------------
+
+ECHO-ON
+
+Action:
+
+This sets the echo flag system variable to ON (default). When the echo flag
+is set to ON, every character in the decoded input stream is echoed to the
+screen. This is useful when debugging a new X-Compiler, as you will be able to
+see exactly where an error occurs. The decoded input stream is the input from
+the source code file after the expansion of any macro definitions.
+
+----------------------------------------------------------------------------
+
+ECHO-OFF
+
+Action:
+
+This turns off the echo flag. Only string literals displayed by the ECHO
+command will be displayed on the screen during the assembly process. You may
+turn echo on and off throughout the assembly process.
+
+----------------------------------------------------------------------------
+
+A>
+
+Action:
+
+Exits assembler mode. When the assembler is in normal mode all numbers in 
+the source code and pushed onto the stack. In assembler mode numbers 
+are inserted into the binary image as literals.
+
+----------------------------------------------------------------------------
+
+<A
+
+Action:
+
+Enters assembler mode. When the assembler is in normal mode all numbers in 
+the source code and pushed onto the stack. In assembler mode numbers 
+are inserted into the binary image as literals.
+
+----------------------------------------------------------------------------
+
+PRIMODIFY
+
+----------------------------------------------------------------------------
+
+HIER
+
+----------------------------------------------------------------------------
+
+!
+
+Action:
+
+Stores the word in the second entry on the stack in the binary image at the 
+address specified by the value at the top of the stack. The top two entries 
+on the stack are removed.
+
+----------------------------------------------------------------------------
+
+!B
+
+Action:
+
+Stores the least-significant byte of the word in the second entry on the stack 
+in the binary image at the address specified by the value at the top of 
+the stack. The top two entries on the stack are removed.
+
+----------------------------------------------------------------------------
+
+@
+
+Action:
+
+This pops a binary image address from the top of the stack. Then pushes the
+value of the word stored at this address onto the top of the stack.
+
+----------------------------------------------------------------------------
+
+@B
+
+Action:
+
+This pops a binary image address from the top of the stack. Then pushes the
+value of the byte stored at this address onto the top of the stack.
+
+----------------------------------------------------------------------------
+
+!FK
+
+----------------------------------------------------------------------------
+
+VERT
+
+Actions:
+
+Swaps the order of the top two entries on the stack.
+
+Example:
+
+1 2 VERT
+
+In the above example the result will be:
+
+2 1
+
+----------------------------------------------------------------------------
+
+DUP
+
+Action:
+
+This pushes a duplicate of the word on top of the stack to the top of the
+stack.
+
+Example:
+
+2 DUP
+
+In the above example the stack will contain:
+
+2 2 
+
+----------------------------------------------------------------------------
+
+L>>>
+
+----------------------------------------------------------------------------
+
++
+
+Action:
+
+Pops the top two values of the stack and pushes their sum back onto the stack.
+Arithmetic is twos complement.
+
+----------------------------------------------------------------------------
+
+-
+
+Action:
+
+Pops the top two values of the stack and pushes their difference back onto the stack.
+Arithmetic is twos complement.
+
+Example:
+
+1 2 -
+
+In the above example the result -1 will be on the top of the stack.
+
+----------------------------------------------------------------------------
+
+'
+
+----------------------------------------------------------------------------
+
+"
+
+Action:
+
+Stores a string literal for later use.
+
+Usage:
+
+" this is a string "
+
+In the above example the string "this is a string" will be stored by the
+assembler for later use. 
+
+Notes:
+
+The assembler can only store one string literal at a time. The string literal
+is erased after its first use by either !T or ECHO.
+
+----------------------------------------------------------------------------
+
+!T
+
+Action:
+
+This writes a previously stored string literal to the binary image at the
+address pointed to by the top of the stack. The top of the stack is
+removed.
+
+----------------------------------------------------------------------------
+
+ECHO
+
+Action:
+
+Writes the last stored string literal value to the screen. This command
+writes to the screen regardless of the current value of the echo flag.
+
+Example:
+
+" This is a string " ECHO
+
+In the above example the string "This is a string" will be echoed to the
+screen.
+
+----------------------------------------------------------------------------
+
+TO DO
+-----
+
+Development of IPSXASM will continue as necessary, this is the current
+wish list:
+
+CODE & NEXT support.
+

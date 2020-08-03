@@ -1,0 +1,212 @@
+                     IPS-M Trigonometry Extensions
+                     -----------------------------
+                        by James Miller G3RUH
+                             1997 Jul 20
+
+IPS-M (v1.05 on) may be used for trigonometric operations in the manner of IPS-C
+as used in the Amsat P3 satellite flight software, and of IPS-N in the Amsat
+ground station software.
+
+The extensions have been implemented by adding three code routines, and
+a IPS trigonometry library, supplied in the file "TRIG".
+
+How to load trigonometry routines
+---------------------------------
+You can use the trigonometry library in two ways:
+
+ either: enter the command;    " TRIG " READ
+ 
+ or:     add the library file "Work.TRIG" to your source program
+
+Examples of Use
+---------------
+1. Calculate cos and sin of 22.5°, scaled 10,000.
+
+   Enter:     10000 0 4096 T-R  (radius X=10,000, Y=0, T=22.5°)
+   Returns:    9238  3826       (equivalent to 0.9238 and 0.3826 at this radius)
+
+2. Calculate radius and angle of vector <X=3000,Y=4000>
+
+   Enter:     3000 4000 R>P
+   Returns:   5000 9672         (R=5000, angle = ATN(4000/3000) = 53.13°)
+
+Code Routines
+-------------
+The 3 trigonometry code routines are TR-LOOP  RP-LOOP  3V3 .  They are
+functionally identical to those in IPS-C3.
+
+TR-LOOP is only called by the library function T-R .  You are unlikely to use
+this routine directly.
+  Entry:  4 items on the stack:  theta, X, Y, 0
+  Exit:   3 items on the stack:  ~0,    k*X', k*Y'
+where k=1.6468.  Routine rotates the vector <X,Y> anti-clockwise through the
+angle theta.  The angle theta must lie in the right hand hemisphere; that is,
+-90 <= theta <= +90.  The handler T-R ensures this, and is described later.
+
+RP-LOOP is only called by the library function R>P .  You are unlikely to use
+this routine directly.
+  Entry:  4 items on the stack:  theta0, X, Y, 0 
+  Exit:   3 items on the stack:  (theta0 + atn2<X,Y>), k*X', ~0
+where k=1.6468.  Routine rotates the vector <X,Y> clockwise through an angle
+such as to drive Y' to zero.  The initial vector must lie in the right hand
+hemisphere; that is, X must be positive.   The handler R>P ensures this, and is
+described later.
+
+RP-LOOP and TR-LOOP are coded using the ARM processor's 32-bit arithmetic for
+the Tan/Atn pseudo division and multiplications.  Because of this, these two
+code routines are accurate to within +/-0.5 bit at the 16th bit.  The handlers
+T-R and R>P degrade this to approx. +/-1 bit.
+
+All library routines, perform "normal" 16-bit operations, and introduce 
+additional rounding errors typical of that resolution.
+
+IPS Trigonometry
+----------------
+The following is adapted from the document "Phase III orbit and Attitude
+Software" by Karl Meinzer, dated 23.8.79
+
+
+a) Plane trigonometry
+   ------------------
+   Classically, all computations can be performed using sine and cosine
+functions and their inverse, but these functions tend to be tedious in their
+use.  They have the following disadvantages:
+
+ * The inverse functions are ambiguous; using them for geometrical problems
+   usually requires separate resolution of these ambiguities.
+
+ * If a sine or cosine carries all the information about an angle, extended
+   precision is required if the value approaches 1.  With 16-bit angles for
+   example, 32-bit arguments would be required.
+
+ * Sines and cosines force an algebraic analysis of the problem.  Many problems
+   are much easier to formulate geometrically, though.
+  
+These disadvantages stem from the fact that neither a sine or a cosine alone is
+sufficient to specify a rotation completely.
+
+A rotation operator may be viewed as a multiplication by exp(i*phi).  Operators
+of this kind have not been much used in classical computations because they
+involve simultaneous operations on two quantities (2-dimensional vectors).
+With most computer languages this approach is not very well supported.  With
+IPS the handling of multivariate operators and their results on the stack is
+trivial and does not require special considerations.
+
+Two rotation operators are defined.  The approach is identical to that
+described by Ball in Byte magazine May 1979 pps.184-194.
+
+The operator T-R (Theta-Rotate) is equivalent to Ball's BB1 and rotates a
+vector <X,Y> to the left by theta to produce a new X and Y.
+
+The operator R>P (Rectangular to Polar) takes <X,Y> and rotates it to the right
+so as to drive Y to zero.  It thus yields <R,theta>.
+
+With rotators the required processing time is a quadratic function of word
+length.  Analysis reveals that 16-bit accuracy is sufficient if the full number
+range is employed.  The following number formats were chosen to this end:
+ 
+Angle representation:
+  The full circle is defined as 2^16.  Thus 1 count is equal to 0.0055°  The
+rotators are accurate to 2 or 3 counts or to about 0.01° to 0.02°; thus
+multiple applications still result in accuracy of order 0.1°. The standard
+IPS operators addition and subtraction are defined modulo 2^16.  Their
+periodicity thus automatically rescales the angles to the correct range; so
+angles may be added or subtracted without consideration of overflows.
+
+Two angles are available as constants:
+  C/4  (a quarter of a circle, 90°) has a numerical value of 16384 or #4000.
+  1RAD (full circle divided by 2 pi) has the value of 10430.
+
+Representation of radius components:
+  To maintain optimum accuracy the absolute value should be as large as
+possible.  Because the cartesian components are signed quantities, 16-bit
+numbers have a range or about +/-32,768.  Internally the rotation operators
+temporarily multiply the radius components by 1.65.  So to avoid internal
+overflows, the absolute value of the radius must not exceed 19898.  Thus it is
+recommended that C/4 is used as a general radius value for convenience and
+accuracy.
+
+If angles are connected with the radius' length, it is more appropriate to use
+1RAD as radius.  C/4 makes full use of the accuracy potential of the rotation
+routines; the loss with 1RAD is still very small, and can be ignored.
+
+T-R uses this format on the stack:
+  entry: X Y theta
+  exit:  X Y
+
+R>P uses this format on the stack:
+  entry: X Y
+  exit:  R Theta
+
+There are two additional maths routines: P* and P/ :
+  P* multiplies two 16-bit numbers to give a 32-bit result.
+  P/ divides a 32-bit number by a 16-bit unsigned number to yield a 16-bit
+     quotient.  All numbers are unsigned.
+They are used to build *F (multiply, fractional): a signed 16-bit number is
+multiplied by an unsigned 16-bit number and the result is divided by 2^16.  The
+second number is thus treated as a fraction, and is for re-scaling purposes.  
+  /N multiplies a signed 16-bit number by 1RAD and then divides the result by
+     an unsigned 16-bit number yielding a 16-bit result.
+ CHS changes the sign of a number on the stack.   
+
+b) Spherical trigonometry
+   ----------------------
+The previously discussed routines are used to build a number of spherical
+operators.  The following conventions are used:
+
+Rectangular coordinates:
+  X Y Z in this order on the stack.  They make up a right-hand screw.
+Polar coordinates:
+  R L B in this order on the stack.  R is the radius, L in the longitude
+        counted from the 0-meridian to the East and B is the latitude counted
+        from the equator to the North.
+
+3P>R
+converts a point of polar coordinates into rectangular coordinates.
+
+3R>P
+converts a point of rectangular coordinates into polar coordinates.
+
+A.B
+takes <La,Ba> and <Lb,Bb> and computes their scalar product.
+
+AXB
+takes <La,Ba> and <Lb,Bb> and computes their vector product.
+It delivers <C/4 x sin(angular spacing), Lc,Bc>  using a right hand screw
+convention.
+
+PROJECTION
+takes <Lpoint,Boint> and <Lnormal,Bnormal>.
+It projects the point onto the plane defined by the normal, and delivers
+ <C/4 x cos(point with plane), Lproj,Bproj>.  Denoting the point vector P and
+the normal vector N, the operation is equivalent to N x P x N.
+
+SK2
+computes the second side of a rectangular spherical triangle where the
+hypotenuse and the first side are given, ( h,k1 -> k2 ).
+This routine could not be solved elegantly by the the approach of viewing all
+spherical problems as rotations.  Rather, the classical formula
+cos(c)=cos(a)*cos(b) is used.  If c gets small the accuracy is thus limited to
+about 0.5°.
+
+In addition to these basic functions, a few operators are defined to ease the
+handling of typical spherical triples on the stack.
+
+ 3V3   swaps two triples on the stack
+ @3    gets a triple from a field address (6 bytes)
+ !3    puts a triple into a 6-byte field
+ @L3   get the longitude from a 6-byte field
+ @LB3  gets longitude and latitude from a 6-byte field
+ -R3   subtracts two spherical vectors given in rectangular coordinates)
+ +R3   adds      two spherical vectors given in rectangular coordinates) on the
+ -P3   subtracts two spherical vectors given in polar coordinates      ) stack
+ +P3   adds      two spherical vectors given in polar coordinates      )
+ /A/   returns the absolute value of a 16-bit number on the stack.
+ 
+Notes
+-----
+ A six byte field contains typically X Y Z or R L B.
+ L = longitude (from German Laengengrad)
+ B = latitude  ( ..    ..   Breite     )
+
+ P* P/ and CHS are part of IPS-M.
